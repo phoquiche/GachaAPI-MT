@@ -16,6 +16,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
 
+import javax.print.Doc;
 import java.util.List;
 
 @SpringBootApplication
@@ -96,6 +97,20 @@ public class GachaApiMtApplication {
 
         }
     }
+
+    public static boolean removeMonster(int idJoueur, String nomMonstre) {
+        MongoCollection<Document> collection = GachaApiMtApplication.getMongo("User");
+        Document doc = collection.find(Filters.eq("id", idJoueur)).first();
+        assert doc != null;
+        if (doc.getInteger("sizeMonster") <= 0) {
+            return false;
+        } else {
+            collection = GachaApiMtApplication.getMongo("User");
+            collection.updateOne(Filters.eq("id", idJoueur), new Document("$pull", new Document("Monstre", new Document("Nom", nomMonstre))));
+            collection.updateOne(Filters.eq("id", idJoueur), new Document("$set", new Document("sizeMonster", doc.getInteger("sizeMonster") - 1)));
+            return true;
+        }
+    }
 }
 @RestController
 @RequestMapping("/api")
@@ -116,13 +131,24 @@ class GachaController {
 
     }
 
-    @GetMapping("/addMonster/{Name}/{Type}")
+    @GetMapping("/addMonster/{id}/{Name}/{Type}")
     //addmonstre, get type and name by get request
-    public String addMonster(@PathVariable String Name, @PathVariable String Type) {
-        if (GachaApiMtApplication.addMonster(001, Name, Type)) {
+    public String addMonster(@PathVariable int id,@PathVariable String Name, @PathVariable String Type) {
+        if (GachaApiMtApplication.addMonster(id, Name, Type)) {
             return "Monstre ajouté";
         } else {
             return "Impossible d'ajouter un monstre";
+        }
+    }
+
+    @GetMapping("/removeMonster/{id}/{Name}")
+    public String removeMonster(@PathVariable int id, @PathVariable String Name) {
+        Document doc = GachaApiMtApplication.getInfo(id);
+
+        if (GachaApiMtApplication.removeMonster(id, Name)) {
+            return "Monstre retiré, nombre de monstres actuels"+doc.getInteger("sizeMonster");
+        } else {
+            return "Impossible de retirer un monstre car vous n'en avez pas";
         }
     }
 
