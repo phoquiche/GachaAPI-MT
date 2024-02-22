@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @SpringBootApplication
 public class GachaApiMtApplication {
 
@@ -76,12 +78,14 @@ public class GachaApiMtApplication {
         return checkLevelUp(idJoueur);
     }
 
-    public static String afficheInfoJSON(int idJoueur){
+    public static Document getInfo(int idJoueur){
         MongoCollection<Document> collection = GachaApiMtApplication.getMongo("User");
         Document doc = collection.find(Filters.eq("id", idJoueur)).first();
         assert doc != null;
-        return doc.toJson();
+        return doc;
     }
+
+
 
 
 
@@ -94,17 +98,23 @@ public class GachaApiMtApplication {
 class GachaController {
     @GetMapping("/gacha")
     public String gacha() {
-       GachaApiMtApplication.addXP(001,100);
-       return GachaApiMtApplication.afficheInfoJSON(001);
+       return GachaApiMtApplication.getInfo(001).toJson();
 
 
 
 
 
     }
-    @GetMapping("/index.html")
-    public String index(){
-        return "<li><ul><a href=\"http://localhost:8080/api/gacha\">Level UP</ul></li>";
+    @GetMapping("/getMonsters")
+    public String getMonsters() {
+        Document doc = GachaApiMtApplication.getInfo(001);
+        List<Document> monsters = doc.getList("Monstre", Document.class);
+        String result = "";
+        for (Document monster : monsters) {
+            result += monster.toJson() + "\n";
+        }
+        return result;
+
     }
 
 
