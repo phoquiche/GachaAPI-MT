@@ -1,22 +1,14 @@
 package User;
 
-import com.mongodb.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
-import org.springframework.beans.factory.config.YamlProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
-
-import javax.print.Doc;
 import java.util.List;
 
 @SpringBootApplication
@@ -29,8 +21,7 @@ public class GachaApiMtApplication {
     public static MongoCollection<Document> getMongo(String collectionName) {
         MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("gacha");
-        MongoCollection<Document> collection = database.getCollection(collectionName);
-        return collection;
+        return database.getCollection(collectionName);
     }
 
 
@@ -63,16 +54,14 @@ public class GachaApiMtApplication {
 
     }
 
-    public static boolean addXP(int idJoueur, int xp) {
+    public static void addXP(int idJoueur, int xp) {
         MongoCollection<Document> collection = GachaApiMtApplication.getMongo("User");
         Document doc = collection.find(Filters.eq("id", idJoueur)).first();
         assert doc != null;
-        int level = doc.getInteger("lvl");
         int newXP = doc.getInteger("exp") + xp;
         Document update = new Document("exp", newXP);
         collection = GachaApiMtApplication.getMongo("User");
         collection.updateOne(Filters.eq("id", idJoueur), new Document("$set", update));
-        return checkLevelUp(idJoueur);
     }
 
     public static Document getInfo(int idJoueur) {
@@ -119,15 +108,15 @@ class GachaController {
     public String gacha(@PathVariable int id) {
        return GachaApiMtApplication.getInfo(id).toJson();
     }
-    @GetMapping("/getMonsters")
-    public String getMonsters() {
-        Document doc = GachaApiMtApplication.getInfo(001);
+    @GetMapping("/getMonsters/{id}")
+    public String getMonsters(@PathVariable int id) {
+        Document doc = GachaApiMtApplication.getInfo(id);
         List<Document> monsters = doc.getList("Monstre", Document.class);
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (Document monster : monsters) {
-            result += monster.toJson() + "\n";
+            result.append(monster.toJson()).append("\n");
         }
-        return result;
+        return result.toString();
 
     }
 
