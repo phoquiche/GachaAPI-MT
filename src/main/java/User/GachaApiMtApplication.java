@@ -100,9 +100,9 @@ public class GachaApiMtApplication {
 @RestController
 @RequestMapping("/api")
 class GachaController {
-    @GetMapping("/gacha")
-    public String gacha() {
-       return GachaApiMtApplication.getInfo(001).toJson();
+    @GetMapping("/info/{id}")
+    public String gacha(@PathVariable int id) {
+       return GachaApiMtApplication.getInfo(id).toJson();
     }
     @GetMapping("/getMonsters")
     public String getMonsters() {
@@ -123,6 +123,18 @@ class GachaController {
             return "Monstre ajouté";
         } else {
             return "Impossible d'ajouter un monstre";
+        }
+    }
+
+    @GetMapping("/addXP/{id}/{xp}")
+    public String addXP(@PathVariable int id, @PathVariable int xp) {
+        GachaApiMtApplication.addXP(id, xp);
+        Document doc = GachaApiMtApplication.getInfo(id);
+        if(GachaApiMtApplication.checkLevelUp(id)){
+            return "XP ajouté, level up, nouveau level : " + doc.getInteger("lvl");
+            }
+        else {
+            return "XP ajouté, pas de level up, level actuel : " + doc.getInteger("lvl");
         }
     }
 
