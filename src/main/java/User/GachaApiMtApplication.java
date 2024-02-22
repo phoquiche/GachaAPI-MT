@@ -57,9 +57,10 @@ public class GachaApiMtApplication {
         int xp = doc.getInteger("exp");
         int newLevel = level+1;
         int newXP = xp-(int)(Math.pow(1.1, level)*50);
-        Document update = new Document("lvl", newLevel).append("exp", newXP);
+        Document update = new Document("lvl", newLevel).append("exp", newXP).append("sizeMonster",doc.getInteger("sizeMonster")+1);
         collection = GachaApiMtApplication.getMongo("User");
         collection.updateOne(Filters.eq("id", idJoueur), new Document("$set", update));
+
 
 
     }
@@ -101,4 +102,10 @@ class GachaController {
 
 
     }
+    @GetMapping("/index.html")
+    public String index(){
+        return "<li><ul><a href=\"http://localhost:8080/api/gacha\">Level UP</ul></li>";
+    }
+
+
 }
