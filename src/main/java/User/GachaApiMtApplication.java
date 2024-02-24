@@ -71,7 +71,7 @@ public class GachaApiMtApplication {
         return doc;
     }
 
-    public static boolean addMonster(int idJoueur, String nomMonstre,String typeMonstre) {
+    public static boolean addMonster(int idJoueur, int idMonstre) {
         //si on veut ajouter un monstre mais que la taille de l'équipe est déjà au max on ne peut pas
         MongoCollection<Document> collection = GachaApiMtApplication.getMongo("User");
         Document doc = collection.find(Filters.eq("id", idJoueur)).first();
@@ -80,14 +80,15 @@ public class GachaApiMtApplication {
             return false;
         } else {
             collection = GachaApiMtApplication.getMongo("User");
-            collection.updateOne(Filters.eq("id", idJoueur), new Document("$push", new Document("Monstre", new Document("Nom", nomMonstre) .append("Type", typeMonstre))));
+            collection.updateOne(Filters.eq("id", idJoueur), new Document("$push", new Document("Monstre", new Document("id", idMonstre))));
+            collection.updateOne(Filters.eq("id", idJoueur), new Document("$set", new Document("sizeMonster", doc.getInteger("sizeMonster") + 1)));
             return true;
 
 
         }
     }
 
-    public static boolean removeMonster(int idJoueur, String nomMonstre) {
+    public static boolean removeMonster(int idJoueur, int idMonstre) {
         MongoCollection<Document> collection = GachaApiMtApplication.getMongo("User");
         Document doc = collection.find(Filters.eq("id", idJoueur)).first();
         assert doc != null;
@@ -95,7 +96,7 @@ public class GachaApiMtApplication {
             return false;
         } else {
             collection = GachaApiMtApplication.getMongo("User");
-            collection.updateOne(Filters.eq("id", idJoueur), new Document("$pull", new Document("Monstre", new Document("Nom", nomMonstre))));
+            collection.updateOne(Filters.eq("id", idJoueur), new Document("$pull", new Document("Monstre", new Document("id", idMonstre))));
             collection.updateOne(Filters.eq("id", idJoueur), new Document("$set", new Document("sizeMonster", doc.getInteger("sizeMonster") - 1)));
             return true;
         }
@@ -120,24 +121,32 @@ class GachaController {
 
     }
 
-    @GetMapping("/addMonster/{id}/{Name}/{Type}")
+    @GetMapping("/addMonster/{id}/{idMonstre}")
     //addmonstre, get type and name by get request
-    public String addMonster(@PathVariable int id,@PathVariable String Name, @PathVariable String Type) {
-        if (GachaApiMtApplication.addMonster(id, Name, Type)) {
+    public String addMonster(@PathVariable int id,@PathVariable String idMonstre) {
+        if (Integer.parseInt(idMonstre) == 0) {
+            return "Impossible d'ajouter un monstre car l'id n'est pas valide";
+        }
+        if (GachaApiMtApplication.addMonster(id,Integer.parseInt(idMonstre))) {
             return "Monstre ajouté";
         } else {
             return "Impossible d'ajouter un monstre";
         }
     }
 
-    @GetMapping("/removeMonster/{id}/{Name}")
-    public String removeMonster(@PathVariable int id, @PathVariable String Name) {
+    @GetMapping("/removeMonster/{id}/{idMonstre}")
+    public String removeMonster(@PathVariable int id, @PathVariable String idMonstre) {
         Document doc = GachaApiMtApplication.getInfo(id);
 
-        if (GachaApiMtApplication.removeMonster(id, Name)) {
-            return "Monstre retiré, nombre de monstres actuels"+doc.getInteger("sizeMonster");
+        if (Integer.parseInt(idMonstre) == 0) {
+            return "Impossible de retirer un monstre car l'id n'est pas valide";
         } else {
-            return "Impossible de retirer un monstre car vous n'en avez pas";
+
+            if (GachaApiMtApplication.removeMonster(id, Integer.parseInt(idMonstre))) {
+                return "Monstre retiré, nombre de monstres actuels" + doc.getInteger("sizeMonster");
+            } else {
+                return "Impossible de retirer un monstre car vous n'en avez pas";
+            }
         }
     }
 
