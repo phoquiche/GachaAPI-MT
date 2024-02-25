@@ -112,6 +112,9 @@ class UserController {
     @GetMapping("/getMonsters/{id}")
     public String getMonsters(@PathVariable int id) {
         Document doc = UserAPIApplication.getInfo(id);
+        if(doc == null){
+            return "Impossible de récupérer les monstres car l'id n'est pas valide";
+        }
         List<Document> monsters = doc.getList("Monstre", Document.class);
         StringBuilder result = new StringBuilder();
         for (Document monster : monsters) {
@@ -138,6 +141,10 @@ class UserController {
     public String removeMonster(@PathVariable int id, @PathVariable String idMonstre) {
         Document doc = UserAPIApplication.getInfo(id);
 
+        //tester si l'user existe
+        if (doc == null) {
+            return "Impossible de retirer un monstre car l'id n'est pas valide";
+        }
         if (Integer.parseInt(idMonstre) == 0) {
             return "Impossible de retirer un monstre car l'id n'est pas valide";
         } else {
